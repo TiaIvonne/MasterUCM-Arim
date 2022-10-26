@@ -5,11 +5,11 @@ This dataset: Monthly figures on aviation contains relevant information from pas
 Note: Predictions would fail or give wrong results because dataset doesn't considered special period in 2020 and above (Corona crisis etc.)
 
 The Html file contains the following topics:
-Exploratory data analysis.
-Graphic representation of time series and seasonal decomposition.
-Data partitioning, train & test.
-Choose an exponential smoothing for the time series.
-Correlograms and Arima modeling.
-Adjust model.
-Predictions.
-Conclusions.
+1.Exploratory data analysis.
+2.Graphic representation of time series and seasonal decomposition.
+3.Data partitioning, train & test.
+4.Choose an exponential smoothing for the time series.
+5.Correlograms and Arima modeling.
+6.Adjust model.
+7.Predictions.
+8.Conclusions.
