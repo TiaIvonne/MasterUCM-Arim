@@ -1,0 +1,306 @@
+---
+title: "**Evaluación análisis y predicción de series temporales**"
+lang: es-Es
+author: "**Ivonne V. Yáñez Mendoza**"
+fontsize: 11pt
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    highlight: tango
+editor_options:
+  chunk_output_type: console
+urlcolor: blue
+always_allow_html: true
+---
+
+##### Profesora: Juana Maria Alonso Revenga
+
+##### Master big data & business analytics, Universidad Complutense de Madrid
+
+##### 28 de julio de 2022
+
+------------------------------------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(comment = NA)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = getwd())
+knitr::include_graphics
+```
+
+```{r echo=FALSE, cache= FALSE}
+knitr::read_chunk("tarea.R")
+```
+
+```{r chunk-1, include=TRUE, eval=TRUE, echo=FALSE}
+```
+
+# 1. Introducción
+
+\normalsize
+
+Para este ejercicio de análisis y predicción de series temporales, se ha decidido utilizar la serie descrita a continuación:
+
+El set de datos ***Monthly figures on aviation*** contiene información relevante al movimiento aéreo, trafico de pasajeros, transporte de carga y correos de los aeropuertos de los Países Bajos.
+
+Como lo indica su nombre, este set de datos contiene información de tipo mensual desde 1999 en adelante de los movimientos en distintos aeropuertos del país.
+
+Para esta practica en particular, se ha decidido estudiar la serie temporal sobre el trafico de vuelos de tipo cargo (expresado en toneladas), para el aeropuerto de Schiphol en Amsterdam.
+
+Se define como vuelo de tipo cargo, los que transportan mercancías exceptuando el traslado de maletas y correos.
+
+Este set de datos ha sido extraído del repositorio de datos abiertos del instituto de estadística de los Países Bajos (Centraal bureau voor statistiek o CBS en sus siglas)
+
+El set original de datos ha sido filtrado para extraer únicamente la información sobre las toneladas transportadas por vuelo de tipo cargo para Schiphol. El set original permite filtros por tipo de vuelo, aeropuertos y otros datos de interés (ver links)
+
+
+Fuentes\linebreak
+
+1.  ID del repositorio: 37478eng
+
+2.  Explicación de los datos: <https://opendata.cbs.nl/statline/portal.html?_la=en&_catalog=CBS&tableId=37478eng&_theme=1153>
+
+4.  Acceso directo al set: <https://opendata.cbs.nl/statline/#/CBS/en/dataset/37478eng/table?ts=1659020962463>
+
+3.  Sitio oficial CBS, acceso a datos abiertos: <https://www.cbs.nl/en-gb/our-services/open-data> 
+
+## 1.1 Exploracion de datos
+
+Se realiza una exploración previa de los datos a utilizar. 
+
+```{r chunk-2, eval=TRUE, echo=TRUE}
+```
+
+Aunque la serie original comienza en 1999 se ha decidido para esta practica usar datos desde el 2012 en adelante.
+
+El set de datos contiene dos columnas ***Period*** y ***Ton***
+
+***Period***: Mes y año
+
+***Ton***: Toneladas transportadas por el sistema cargo
+
+Creación de la serie de tiempo:
+
+```{r chunk-3, eval=TRUE, echo=TRUE}
+```
+
+
+Con str se obtiene el total de observaciones para esta serie, 125 registros.
+\pagebreak
+
+
+# 2. Representación gráfica de la serie de tiempo y decomposición estacional
+
+```{r chunk-4, eval=TRUE, include = TRUE, echo=TRUE,fig.height = 5, fig.width = 5, fig.align = "center", cache=FALSE}
+
+
+```
+
+En el gráfico se observa la tendencia al alza y picos por posible efecto de estacionalidad, en cuanto a la caída dramática en la linea del gráfico entre 2020-2021 se puede atribuir a múltiples factores, efecto COVID, crisis en aeropuertos europeos, guerras, traslado de aviones cargo desde Schiphol a otros recintos etc, el set de datos indica además que estos datos no son definitivos y pueden sufrir ajustes en un futuro. Al no tener media constante se puede inferir que no es estacionaria.
+
+La serie de tiempo aunque va al alza no muestra variación en la magnitud del patrón con el paso del tiempo. Se podría decir que es una serie de tipo aditiva.
+
+Solo como un recurso adicional, la función mseastest() de la librería tsutils es una comprobación rápida de si la serie es aditiva o multiplicativa.
+
+Para la serie cargo el resultado es que es una serie de tipo aditiva y se realiza el gráfico de descomposición estacional.
+
+
+```{r chunk-4a, eval=TRUE, include = TRUE, echo=TRUE, fig.align = "center", cache=FALSE}
+
+```
+
+Con el gráfico en la imagen anterior se observa algo similar a lo concluido en el análisis inicial de la serie de datos (figura 1) y que en el caso de la estacionalidad esta se repite de forma constante, por lo que se confirma el comportamiento.
+
+
+## 2.2 Coeficientes de estacionalidad
+
+\tiny
+```{r chunk-5, eval=TRUE, include = TRUE, echo=FALSE}
+```
+
+\normalsize
+La tabla muestra el componente estacional de la serie de datos, en este caso un aumento del transporte de carga en toneladas sobre todo en los meses de marzo, octubre y noviembre. Esto coincidiría con los peaks de carga por cambios de temporada en el caso de marzo y en el caso de octubre y noviembre por celebraciones de fin de año. 
+
+```{r chunk-6, eval=TRUE, include = TRUE, echo=TRUE, fig.width= 5}
+```
+
+El gráfico estacional muestra los peaks de vuelos cargo para los meses de marzo, octubre y noviembre. Mientras que en los meses de enero, febrero  y agosto se observan una baja en las toneladas transportadas. Se ve un efecto importante del COVID 19 para el mes de abril de 2020, representando una caída importante en las toneladas transportadas.
+\pagebreak
+
+# 3. Partición de datos en train y test
+
+Se realiza la partición de datos en train y test para contrastar la eficacia de los métodos de predicción. En el caso de train, se deja la serie de tiempo hasta diciembre de 2019 (pre pandemia) y los datos test desde enero de 2020.
+
+```{r chunk-7, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+# 4. Metodo de suavizado adecuado para la serie temporal
+
+Una vez realizada la partición se prueba a realizar predicciones con el método de Holt-Winters que es el adecuado para este tipo de series con comportamiento estacional.
+
+```{r chunk-8, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+El gráfico en sus predicciones indica que la tendencia al alza en las toneladas transportadas se mantendría. A continuación se muestran los valores de las predicciones ademas de sus intervalos de predicción para el nivel de confianza de 80 y 95.
+
+Revisando los datos entregados en la tabla de predicciones, se puede indicar por ejemplo, que con un nivel de confianza de un 95% para el mes de enero de 2021 las toneladas a transportar vía cargo aéreo en el aeropuerto de Schiphol en Amsterdam estarán entre 94.913 y 132.729 toneladas.
+
+```{r chunk-9, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+Los parámetros del modelo ajustado son:
+
+```{r chunk-10, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+$L_\tau = 0.5464 (x_{\tau} - S_{\tau - s}) + (1 - 0.5464) (L_{\tau - 1} + b_{\tau - 1})$
+
+$B_\tau = 0.0166 (L_{\tau} - L_{\tau - 1}) + (1 -0.0166)b_{\tau - 1}$
+
+$S_\tau = 0.0001 (x_{\tau} - L_{\tau}) + (1 - 0.0001) S_{\tau - s}$
+
+$\hat x_{\tau + 1} = (L_{\tau} + b_{\tau}) + S_{\tau - s+1}$
+
+\pagebreak
+
+# 5. Correlogramas
+
+Se muestra el plot y correlogramas de la serie original
+
+```{r chunk-11, eval=TRUE, include = TRUE, echo=TRUE,fig.height = 3, fig.width = 5, fig.align = "center", cache=FALSE}
+```
+
+En el primer plot es la serie original que muestra picos de estacionalidad que se han descrito anteriormente y tendencia al alza con el paso del tiempo. 
+
+En los correlogramas ACF y PACF se observa que la serie original tiende a decrecer de forma lenta lo que podría indicar que no es estacionaria por esto que se decide a aplicar una primera diferencia con el fin de convertir la serie a estacionaria.
+
+Como recurso adicional se utiliza el adf.test para saber si es estacionaria o no. Observando el p value se puede concluir que no lo es.
+
+## 5.1 Primera diferencia aplicada 
+
+Plot y correlogramas de la serie con diferencia aplicada
+
+```{r chunk-12, eval=TRUE, include = TRUE, echo=TRUE, fig.height = 3, fig.width = 5, fig.align = "center"}
+```
+
+Se observa en el primer gráfico con autoplot que con esta diferencia la serie se va a semejando a una serie con ruido blanco. Se mantienen picos significativos en los lag 12, 24 por lo que es necesario aplicar una segunda diferencia considerando la estacionalidad.
+
+
+## 5.2 Segunda diferencia aplicada 
+
+Plot y correlogramas de la serie con diferencia aplicada en estacionalidad
+
+```{r chunk-13, eval=TRUE, include = TRUE, echo=TRUE, fig.height = 3, fig.width = 5, fig.align = "center"}
+```
+
+Se observa una mejora en los gráficos ACF y PACF, se han "suavizado" los picos en los lags 12, 24 etc.
+
+
+## 5.3 Ajuste del modelo
+
+Observando los gráficos ACF y PACF la serie podría ser de tipo MA(1) considerando esto se propone realizar un primer ajuste manual, se propone un modelo (0,1,1) (considerando aplicar una diferencia) y un ajuste *seasonal* de (0,1,1) con su correspondiente diferencia estacional.
+
+Determinar el ajuste correcto de forma manual puede ser de alta dificultad, en el apartado anterior se propone un modelo en base MA, pero revisando los gráficos también podría ser un ARMA. En el segundo modelo propuesto se prueba considerando este modelo.
+
+
+Se muestran los resultados para ambas pruebas. El p value es mejor en el modelo1 que en el modelo 2.
+
+```{r chunk-14, eval=TRUE, include = TRUE, echo=TRUE, fig.align = "center", fig.height = 3, fig.width = 5}
+```
+
+A continuación se prueba la función autoarima para estimar el mejor ajuste al modelo y comprobar las propuestas realizadas anteriormente.
+
+```{r chunk-15, eval=TRUE, include = TRUE, echo=TRUE, fig.align = "center", fig.height = 3, fig.width = 5}
+```
+
+El resultado que entrega la función auto.arima() es igual a la planteada en el modelo manual.
+
+El p value es de 0.3377 se podría aceptar la hipótesis de los residuos incorrelados y se observa en el autocorrelograma que prácticamente todos los picos están dentro de las líneas de intervalos de confianza. El modelo ARIMA para considerar predicciones es el arima1.
+
+
+# 6. Expresion algebraica modelo ajustado
+
+```{r chunk-16, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+Los parámetros estimados son: -0.45 para MA y -0.6625 para medias móviles.
+
+
+$$Arima$$
+$$ (1 + 0.4513B^{12})(1-B^{12})X_{\tau} = (1 - 0.6671B^{12})Z_{\tau}$$
+
+
+$$ (1 + 0.45136B^{12})(1-B^{12})(X_{\tau} - X_{\tau - 1}) = -0.6671Z_{\tau - 12} + Z_{\tau}$$
+
+$$ (1 + 0.4513B^{12})(X_{\tau} - X_{\tau - 12} -X_{\tau - 1} + X_{\tau - 13}) = -0.6671_{\tau -12} + Z_{\tau}$$
+
+
+$$ X_{\tau} - X_{\tau - 12} - X_{\tau - 1} + X_{\tau -13} + 0.57X_{\tau -12} - 0.45X_{\tau - 24} - 0.45X_{\tau -13} + 0.45X_{\tau - 25} = 0.66_{\tau -12} + Z_{\tau}$$
+
+$$ X_{\tau} - 1.45X_{\tau -12} - X_{\tau -1}+ 1.45X_{\tau -13} - 1.457X_{\tau -24} + 1.45X_{\tau -25} = -0.66_{\tau -12} + Z_{\tau}$$
+
+$$ X_{\tau} = X_{\tau -1} + 0.45 X_{\tau -12} - 0.45X_{\tau -13} + 0.457X_{\tau -24} - 0.45X_{\tau -25} -0.66_{\tau -12} + Z_{\tau}$$
+
+A continuación se generaran las predicciones de los modelos.
+
+\pagebreak
+
+# 7. Predicciones
+
+Se realiza el calculo de las predicciones con sus intervalos de confianza.
+
+En primer lugar se genera un gráfico con las predicciones basadas en el modelo arima (0,1,1)(0,1,1)[12]
+```{r chunk-17, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+Adicionalmente se genera una tabla con las predicciones e intervalos de confianza para el modelo Arima.
+
+
+```{r chunk-18, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+Tomando como ejemplo el mes de enero de 2021, se puede predecir que con un intervalo de confianza del 95% las toneladas transportadas vía cargo aéreo desde Schiphol,NL estarán entre 95.208 y 132.000 ton.
+
+\pagebreak
+# 8. Conclusiones
+
+Considerando ambos modelos (suavizado y Arima) se realiza una comparación con el set de datos **test** que ha sido reservado para estos efectos.
+
+```{r chunk-19, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+La predicción para este gráfico se ha mostrado para un periodo de dos años, donde se observan diferencias importantes que se pueden clasificar en dos grupos:
+
+La primera diferencia predictiva entre Arima-Hw versus test es al principio de la pandemia COVID-19 donde las predicciones estimadas son mas elevadas que el real. 
+
+La segunda diferencia tiene que ver con que a partir de mediados del 2021 las toneladas transportadas crece de forma significativa, superando las expectativas de las predicciones, sin llegar a alcanzar la linea azul de test. 
+
+Como nota al margen la serie train presenta un descenso dramático desde el ultimo cuarto del 2021 en adelante y repunta a partir del 2022. Si se extiende la predicción, los datos tanto de holt winters y Arima no coinciden en absoluto. Si se revisan las notas del set de datos original desde CBS indican que los datos de 2020 en adelante son provisionales y están sujetos a revisiones y/o cambios.
+
+Considerando estas particularidades por la situación excepcional desde el 2020 en adelante en contexto de pandemia, guerra, crisis en los aeropuertos y en especial para Schiphol se infiere que las predicciones para este modelo probablemente no coincidan y puedan mostrar varias inexactitudes.
+
+Si se revisan las predicciones para 24 meses con ambos métodos, el modelo Arima es el que mas se "acercaría" a los datos test por lo que provisionalmente seria el modelo ganador para esta practica.
+
+
+Como prueba y tomando como base para predecir el mes de enero de 2021 (tal como en las conclusiones del suavizado y Arima) se muestra una tabla resumen con las predicciones versus la cifra real de toneladas transportadas en Schiphol, NL
+
+
+
+```{r chunk-19a, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+
+
+
+Como comprobación final se generan las tablas de exactitud (accuracy) y la comparación de los modelos con su AIC.
+
+```{r chunk-20, eval=TRUE, include = TRUE, echo=TRUE}
+```
+
+En el caso de accuracy, observando los valores por ejemplo el indice mas bajo en error y en MAPE lo obtiene el modelo Arima, al ser un MAPE menor a 10 indica un buen grado de exactitud en las predicciones.
+
+Si se debe elegir un modelo independiente de la excepcionalidad del contexto actual y los resultados de las predicciones vistos anteriormente, si se observan los valores AIC de ambos modelos, el $Arima$ muestra un numero menor, sumado a las resultados del gráfico de predicciones y tablas, se confirma su elección para realizar las predicciones correspondientes.
+
